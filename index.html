@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Logic Calculator Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700;900&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#070b10;--s1:#0c1219;--s2:#101820;--bd:#1a2840;
+  --a:#00d4ff;--a2:#f59e0b;--a3:#22c55e;--err:#ef4444;
+  --tx:#b8cce0;--mt:#3d5570;
+  --mono:'Share Tech Mono',monospace;--sans:'Barlow',sans-serif;--dsp:'Barlow Condensed',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+.hidden{display:none!important;}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+
+/* ── LOGIN ── */
+#screen-login{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+.lcard{width:420px;background:var(--s1);border:1px solid var(--bd);padding:40px;animation:fadeUp .5s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.lhex{width:50px;height:50px;background:var(--a);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);margin:0 auto 12px;animation:glow 2s infinite;}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 8px var(--a))}50%{filter:drop-shadow(0 0 20px var(--a))}}
+.ltitle{font-family:var(--dsp);font-size:26px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:#fff;text-align:center;}
+.ltitle span{color:var(--a);}
+.lsub{font-family:var(--mono);font-size:10px;color:var(--mt);letter-spacing:2px;text-align:center;margin-bottom:28px;}
+.rtabs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd);margin-bottom:22px;}
+.rtab{background:var(--s2);padding:10px;text-align:center;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mt);transition:all .2s;}
+.rtab.on{background:var(--a);color:#000;font-weight:bold;}
+.fld{margin-bottom:14px;}
+.fld label{display:block;font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mt);margin-bottom:5px;}
+.fld input,.fld select{width:100%;background:var(--s2);border:1px solid var(--bd);color:var(--tx);font-family:var(--mono);font-size:13px;padding:10px 13px;outline:none;transition:border-color .2s;appearance:none;}
+.fld input:focus,.fld select:focus{border-color:var(--a);}
+.lbtn{width:100%;background:var(--a);color:#000;border:none;padding:13px;font-family:var(--dsp);font-size:14px;font-weight:900;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:4px;}
+.lbtn:hover{background:#fff;box-shadow:0 0 24px rgba(0,212,255,.4);}
+.lerr{font-family:var(--mono);font-size:11px;color:var(--err);margin-top:10px;text-align:center;display:none;}
+.lhint{font-family:var(--mono);font-size:10px;color:var(--mt);margin-top:16px;padding:12px;background:var(--s2);border:1px solid var(--bd);line-height:1.9;}
+.lhint b{color:var(--tx);}
+
+/* ── APP SHELL ── */
+#app{display:none;flex-direction:column;min-height:100vh;}
+header{position:sticky;top:0;z-index:100;background:rgba(7,11,16,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--bd);padding:0 26px;height:56px;display:flex;align-items:center;justify-content:space-between;}
+.logo{display:flex;align-items:center;gap:10px;}
+.lhx{width:28px;height:28px;background:var(--a);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);animation:glow 2s infinite;}
+.ltx{font-family:var(--dsp);font-size:19px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#fff;}.ltx span{color:var(--a);}
+.hright{display:flex;align-items:center;gap:18px;}
+.lbadge{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:1px;}
+.ldot{width:7px;height:7px;border-radius:50%;background:var(--a3);animation:blink 1.2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+.upill{display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--bd);padding:4px 11px;font-family:var(--mono);font-size:11px;}
+.urole{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--mt);}
+.clk{font-family:var(--mono);font-size:11px;color:var(--mt);}
+.outbtn{font-family:var(--mono);font-size:9px;color:var(--err);cursor:pointer;letter-spacing:1px;text-transform:uppercase;border:1px solid var(--err);padding:4px 9px;transition:all .2s;background:transparent;}
+.outbtn:hover{background:var(--err);color:#fff;}
+
+/* ── TICKER ── */
+.ticker{overflow:hidden;background:var(--s2);border-bottom:1px solid var(--bd);border-top:2px solid var(--a2);padding:6px 0;}
+.ttrack{display:flex;gap:50px;animation:tick 28s linear infinite;white-space:nowrap;}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ti{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--mt);}
+.ti .tc{color:var(--tx);}.ti .tp{color:var(--a2);}.ti .tu{color:var(--a3);}.ti .td{color:var(--err);}
+
+/* ── PAGE ── */
+.page{position:relative;z-index:1;padding:20px 26px;max-width:1600px;margin:0 auto;flex:1;}
+
+/* ── SECTION LABEL ── */
+.slbl{font-family:var(--mono);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--mt);margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.slbl::after{content:'';flex:1;height:1px;background:var(--bd);}
+
+/* ── KPI ── */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.kpi{background:var(--s1);border:1px solid var(--bd);padding:16px 20px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;animation:fadeUp .4s ease both;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi.k1::before{background:var(--a)}.kpi.k2::before{background:var(--a2)}.kpi.k3::before{background:var(--a3)}.kpi.k4::before{background:var(--err)}
+.kpi:nth-child(1){animation-delay:.05s}.kpi:nth-child(2){animation-delay:.1s}.kpi:nth-child(3){animation-delay:.15s}.kpi:nth-child(4){animation-delay:.2s}
+.kpi:hover{border-color:var(--a);transform:translateY(-2px);}
+.kl{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mt);margin-bottom:8px;}
+.kv{font-family:var(--dsp);font-size:36px;font-weight:900;line-height:1;margin-bottom:5px;}
+.kpi.k1 .kv{color:var(--a)}.kpi.k2 .kv{color:var(--a2)}.kpi.k3 .kv{color:var(--a3)}.kpi.k4 .kv{color:var(--err)}
+.ks{font-size:10px;color:var(--mt);font-family:var(--mono);}
+.bc{display:inline;font-size:9px;font-family:var(--mono);padding:1px 5px;border-radius:2px;margin-left:5px;}
+.bc.up{background:rgba(34,197,94,.1);color:var(--a3)}.bc.dn{background:rgba(239,68,68,.1);color:var(--err)}
+
+/* ── MAIN GRID ── */
+.mgrid{display:grid;grid-template-columns:300px 1fr;gap:12px;margin-bottom:20px;}
+
+/* ── PANEL ── */
+.pnl{background:var(--s1);border:1px solid var(--bd);display:flex;flex-direction:column;}
+.ph{padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.pt{font-family:var(--dsp);font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;}
+.pb{font-family:var(--mono);font-size:9px;padding:2px 7px;border:1px solid var(--a);color:var(--a);letter-spacing:1px;}
+.pb.g{border-color:var(--a3);color:var(--a3);}
+.pb.y{border-color:var(--a2);color:var(--a2);}
+.pbody{padding:14px 18px;flex:1;}
+
+/* ── SEARCH ── */
+.si{width:100%;background:var(--s2);border:1px solid var(--bd);color:var(--tx);font-family:var(--mono);font-size:12px;padding:9px 36px 9px 12px;outline:none;transition:border-color .2s;margin-bottom:12px;}
+.si:focus{border-color:var(--a);}
+.sico{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--mt);font-size:14px;}
+.sw{position:relative;}
+
+/* ── DRIVER LIST ── */
+.dlist{display:flex;flex-direction:column;gap:6px;max-height:460px;overflow-y:auto;}
+.ditem{background:var(--s2);border:1px solid var(--bd);padding:10px 12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.ditem:hover,.ditem.sel{border-color:var(--a);background:rgba(0,212,255,.05);}
+.dav{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:#000;font-weight:bold;flex-shrink:0;}
+.din{flex:1;min-width:0;}
+.dnm{font-size:12px;font-weight:600;color:#fff;margin-bottom:1px;}
+.dmt{font-family:var(--mono);font-size:9px;color:var(--mt);}
+.dst{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:20px;flex-shrink:0;letter-spacing:1px;text-transform:uppercase;}
+.dst.active{background:rgba(34,197,94,.12);color:var(--a3);border:1px solid var(--a3);}
+.dst.idle{background:rgba(245,158,11,.12);color:var(--a2);border:1px solid var(--a2);}
+.dst.offline{background:rgba(61,85,112,.12);color:var(--mt);border:1px solid var(--mt);}
+
+/* ── GPS MAP ── */
+.maparea{flex:1;position:relative;min-height:400px;background:#08111c;overflow:hidden;}
+#wsvg{width:100%;height:100%;}
+.gss{display:flex;gap:18px;flex-wrap:wrap;}
+.gs{font-family:var(--mono);font-size:9px;color:var(--mt);letter-spacing:1px;text-transform:uppercase;}
+.gs span{color:var(--a);font-size:11px;display:block;margin-top:2px;}
+
+/* ── TOOLTIP ── */
+.tip{position:absolute;background:rgba(5,9,14,.97);border:1px solid var(--a);padding:10px 14px;font-family:var(--mono);font-size:10px;pointer-events:none;z-index:20;display:none;min-width:170px;}
+.tip.on{display:block;}.tipnm{color:var(--a);font-size:12px;margin-bottom:6px;font-weight:bold;}
+.tipr{display:flex;justify-content:space-between;gap:16px;color:var(--mt);margin-bottom:2px;}.tipr span{color:var(--tx);}
+
+/* ── DRIVER VIEW ── */
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+.tstat{background:var(--s2);border:1px solid var(--bd);padding:12px;text-align:center;}
+.tsv{font-family:var(--dsp);font-size:26px;font-weight:900;color:var(--a);}
+.tsl{font-family:var(--mono);font-size:9px;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+
+/* ── GPS CARD ── */
+.gpsc{text-align:center;padding:8px 0;}
+.gico{font-size:38px;margin-bottom:10px;}
+.gct{font-family:var(--dsp);font-size:18px;font-weight:700;letter-spacing:1px;color:#fff;margin-bottom:4px;}
+.gcs{font-family:var(--mono);font-size:10px;color:var(--mt);margin-bottom:14px;}
+.gcbtn{background:transparent;border:1px solid var(--a);color:var(--a);font-family:var(--mono);font-size:10px;padding:8px 18px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all .2s;width:100%;}
+.gcbtn:hover{background:var(--a);color:#000;}
+.gcbtn.live{background:var(--a3);border-color:var(--a3);color:#000;}
+.gcoords{font-family:var(--mono);font-size:10px;color:var(--a3);margin-top:10px;display:none;line-height:1.6;}
+.gcoords.on{display:block;}
+.gbadge{font-family:var(--mono);font-size:8px;padding:2px 7px;border:1px solid var(--mt);color:var(--mt);letter-spacing:1px;}
+.gbadge.live{border-color:var(--a3);color:var(--a3);}
+
+/* ── FORM ── */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ff label{display:block;font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mt);margin-bottom:4px;}
+.ff input,.ff select{width:100%;background:var(--s2);border:1px solid var(--bd);color:var(--tx);font-family:var(--mono);font-size:12px;padding:8px 11px;outline:none;transition:border-color .2s;appearance:none;}
+.ff input:focus,.ff select:focus{border-color:var(--a);}
+.ff.full{grid-column:1/-1;}
+.sbtn{width:100%;background:var(--a);color:#000;border:none;padding:10px;font-family:var(--dsp);font-size:13px;font-weight:900;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.sbtn:hover{background:#fff;box-shadow:0 0 18px rgba(0,212,255,.3);}
+.sbtn.g{background:var(--a3);}.sbtn.g:hover{box-shadow:0 0 18px rgba(34,197,94,.3);}
+
+/* ── CALC RESULT ── */
+.cres{background:var(--s2);border:1px solid var(--a);padding:12px;margin-top:10px;display:none;}
+.cres.on{display:block;}
+.crr{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bd);font-family:var(--mono);font-size:10px;}
+.crr:last-child{border-bottom:none;}.crr .cv{color:var(--a);}
+
+/* ── LOG TABLE ── */
+.ltbl{width:100%;border-collapse:collapse;font-size:11px;}
+.ltbl th{font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--mt);text-align:left;padding:7px 10px;border-bottom:1px solid var(--bd);}
+.ltbl td{padding:9px 10px;border-bottom:1px solid var(--bd);font-family:var(--mono);}
+.ltbl tr:last-child td{border-bottom:none;}
+.ltbl tr:hover td{background:rgba(0,212,255,.02);}
+.delbtn{background:transparent;border:1px solid var(--err);color:var(--err);font-family:var(--mono);font-size:9px;padding:2px 7px;cursor:pointer;transition:all .2s;}
+.delbtn:hover{background:var(--err);color:#fff;}
+
+/* ── REGION ROW ── */
+.rrow{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px;}
+.rc{background:var(--s1);border:1px solid var(--bd);padding:12px 14px;position:relative;overflow:hidden;transition:border-color .2s;}
+.rc:hover{border-color:var(--a2);}
+.rcn{font-family:var(--dsp);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--a2);margin-bottom:6px;}
+.rcs{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--mt);padding:2px 0;}
+.rcs span{color:var(--tx);}
+.rcb{position:absolute;right:-5px;bottom:-5px;font-size:42px;opacity:.04;pointer-events:none;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--s1);border:1px solid var(--a3);padding:10px 16px;font-family:var(--mono);font-size:11px;color:var(--a3);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;max-width:280px;}
+.toast.on{transform:translateY(0);opacity:1;}
+.toast.err{border-color:var(--err);color:var(--err);}
+.toast.inf{border-color:var(--a);color:var(--a);}
+
+footer{position:relative;z-index:1;border-top:1px solid var(--bd);padding:12px 26px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--mt);}
+footer a{color:var(--a);text-decoration:none;}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══ LOGIN ══ -->
+<div id="screen-login">
+  <div class="lcard">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div class="lhex"></div>
+      <div class="ltitle">Logic<span>Calc</span> Pro</div>
+      <div class="lsub">Logistics Intelligence Platform</div>
+    </div>
+    <div class="rtabs">
+      <div class="rtab on" id="tab-m" onclick="setRole('manager')">⚙ Manager</div>
+      <div class="rtab" id="tab-d" onclick="setRole('driver')">🚛 Driver</div>
+    </div>
+    <div class="fld">
+      <label>Username</label>
+      <input id="lu" type="text" placeholder="Enter username" autocomplete="off"/>
+    </div>
+    <div class="fld">
+      <label>Password</label>
+      <input id="lp" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')login()"/>
+    </div>
+    <button class="lbtn" id="lbtn" onclick="login()">LOGIN</button>
+    <div class="lerr" id="lerr">Invalid username or password.</div>
+    <div class="lhint">
+      <b>Manager:</b> admin / admin123<br>
+      <b>Drivers:</b> trk001–trk008 / pass123
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+  <header>
+    <div class="logo"><div class="lhx"></div><div class="ltx">Logic<span>Calc</span> Pro</div></div>
+    <div class="hright">
+      <div class="lbadge"><div class="ldot"></div><span id="hmode">GPS LIVE</span></div>
+      <div class="upill"><div><div style="color:#fff;font-size:11px;" id="hname">—</div><div class="urole" id="hrole">—</div></div></div>
+      <div class="clk" id="clk">--:--:--</div>
+      <button class="outbtn" onclick="logout()">LOGOUT</button>
+    </div>
+  </header>
+  <div class="ticker"><div class="ttrack" id="ticker"></div></div>
+
+  <!-- MANAGER VIEW -->
+  <div id="v-manager" class="hidden">
+    <div class="page">
+      <div class="slbl">Fleet Overview</div>
+      <div class="kpis">
+        <div class="kpi k1"><div class="kl">Active Drivers</div><div class="kv" id="ka">—</div><div class="ks">of <span id="kt">—</span> total</div></div>
+        <div class="kpi k2"><div class="kl">Live GPS Drivers</div><div class="kv" id="kg">0</div><div class="ks">broadcasting now <span class="bc up">📡</span></div></div>
+        <div class="kpi k3"><div class="kl">Avg Fleet Efficiency</div><div class="kv" id="ke">—</div><div class="ks">km/litre average <span class="bc up">↑ 1.4</span></div></div>
+        <div class="kpi k4"><div class="kl">Monthly Fuel Spend</div><div class="kv">$2.1M</div><div class="ks">across 18 regions <span class="bc dn">↓ 3.2%</span></div></div>
+      </div>
+
+      <div class="slbl">Live Driver Tracking</div>
+      <div class="mgrid">
+        <!-- SEARCH -->
+        <div class="pnl">
+          <div class="ph"><div class="pt">Driver Search</div><span class="pb">MANAGER</span></div>
+          <div class="pbody">
+            <div class="sw"><input class="si" id="msearch" type="text" placeholder="Name · ID · Region…" oninput="filterList(this.value)"/><span class="sico">⌕</span></div>
+            <div class="dlist" id="dlist"></div>
+          </div>
+        </div>
+
+        <!-- GPS MAP -->
+        <div class="pnl">
+          <div class="ph">
+            <div class="pt">Live GPS Map</div>
+            <div class="gss">
+              <div class="gs">Tracking<span id="gs-name">Select driver →</span></div>
+              <div class="gs">Speed<span id="gs-spd">—</span></div>
+              <div class="gs">Fuel<span id="gs-fuel">—</span></div>
+              <div class="gs">Region<span id="gs-reg">—</span></div>
+              <div class="gs">GPS Live<span id="gs-gps">—</span></div>
+            </div>
+          </div>
+          <div class="maparea">
+            <svg id="wsvg" viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="gr" width="45" height="42" patternUnits="userSpaceOnUse">
+                  <path d="M45 0L0 0 0 42" fill="none" stroke="rgba(0,212,255,0.04)" stroke-width="1"/>
+                </pattern>
+              </defs>
+              <rect width="900" height="420" fill="url(#gr)"/>
+              <line x1="0" y1="210" x2="900" y2="210" stroke="#1a2840" stroke-width="0.5" stroke-dasharray="6,10"/>
+              <line x1="450" y1="0" x2="450" y2="420" stroke="#1a2840" stroke-width="0.5" stroke-dasharray="6,10"/>
+              <g fill="#0c1825" stroke="#1a3050" stroke-width="1">
+                <path d="M72,68L78,52L122,42L172,48L212,58L242,84L236,108L216,138L196,158L172,176L152,192L126,198L106,192L86,178L70,152L56,128L62,98Z"/>
+                <path d="M156,212L186,205L212,212L226,238L230,268L222,302L206,332L186,348L162,342L148,318L140,282L142,252Z"/>
+                <path d="M376,52L422,45L458,50L478,66L472,86L452,102L422,110L394,106L374,88L370,70Z"/>
+                <path d="M386,122L422,115L458,118L478,136L482,162L480,198L472,232L460,260L442,275L416,278L393,265L378,240L372,208L372,172L376,146Z"/>
+                <path d="M476,40L542,32L612,30L672,36L722,48L748,66L752,88L736,112L706,132L672,146L636,152L600,150L566,142L536,132L506,118L483,98L474,76Z"/>
+                <path d="M576,142L612,137L630,150L637,176L629,203L612,216L592,213L576,196L568,173Z"/>
+                <path d="M648,226L702,218L750,222L772,246L772,280L760,308L734,322L700,326L670,312L650,290L638,260Z"/>
+              </g>
+              <g id="trails"></g>
+              <g id="trucks"></g>
+            </svg>
+            <div class="tip" id="tip">
+              <div class="tipnm" id="tipnm"></div>
+              <div class="tipr">Truck<span id="tipid"></span></div>
+              <div class="tipr">Speed<span id="tipspd"></span></div>
+              <div class="tipr">Fuel<span id="tipfuel"></span></div>
+              <div class="tipr">Load<span id="tipload"></span></div>
+              <div class="tipr">GPS<span id="tipgps"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slbl">Regional Breakdown</div>
+      <div class="rrow">
+        <div class="rc"><div class="rcn">🌎 N.America</div><div class="rcs">Drivers<span>68</span></div><div class="rcs">Eff<span>15.1km/L</span></div><div class="rcs">Spend<span>$412K</span></div><div class="rcb">🌎</div></div>
+        <div class="rc"><div class="rcn">🌍 Europe</div><div class="rcs">Drivers<span>54</span></div><div class="rcs">Eff<span>12.4km/L</span></div><div class="rcs">Spend<span>$518K</span></div><div class="rcb">🌍</div></div>
+        <div class="rc"><div class="rcn">🌏 S.Asia</div><div class="rcs">Drivers<span>42</span></div><div class="rcs">Eff<span>13.8km/L</span></div><div class="rcs">Spend<span>$298K</span></div><div class="rcb">🌏</div></div>
+        <div class="rc"><div class="rcn">🌏 E.Asia</div><div class="rcs">Drivers<span>38</span></div><div class="rcs">Eff<span>16.0km/L</span></div><div class="rcs">Spend<span>$324K</span></div><div class="rcb">🌏</div></div>
+        <div class="rc"><div class="rcn">🌍 Africa</div><div class="rcs">Drivers<span>27</span></div><div class="rcs">Eff<span>11.2km/L</span></div><div class="rcs">Spend<span>$188K</span></div><div class="rcb">🌍</div></div>
+        <div class="rc"><div class="rcn">🌎 S.America</div><div class="rcs">Drivers<span>18</span></div><div class="rcs">Eff<span>13.5km/L</span></div><div class="rcs">Spend<span>$214K</span></div><div class="rcb">🌎</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRIVER VIEW -->
+  <div id="v-driver" class="hidden">
+    <div class="page">
+      <div class="slbl">My Dashboard</div>
+      <div class="tgrid" id="tstats"></div>
+      <div class="dgrid">
+        <!-- GPS -->
+        <div class="pnl">
+          <div class="ph"><div class="pt">My GPS</div><span class="gbadge" id="gpsbadge">OFFLINE</span></div>
+          <div class="pbody">
+            <div class="gpsc">
+              <div class="gico">📡</div>
+              <div class="gct">Share Your Location</div>
+              <div class="gcs">Manager sees your live dot on the world map</div>
+              <button class="gcbtn" id="gpsbtn" onclick="toggleGPS()">START BROADCASTING</button>
+              <div class="gcoords" id="gcoords"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FUEL CALC -->
+        <div class="pnl">
+          <div class="ph"><div class="pt">Fuel Calculator</div><span class="pb">QUICK CALC</span></div>
+          <div class="pbody">
+            <div class="fgrid">
+              <div class="ff">
+                <label>Region / Fuel Price</label>
+                <select id="cr" onchange="document.getElementById('cp').value=this.value">
+                  <option value="1.02">🇺🇸 USA — $1.02/L</option>
+                  <option value="1.78">🇬🇧 UK — $1.78/L</option>
+                  <option value="1.91">🇩🇪 Germany — $1.91/L</option>
+                  <option value="1.22" selected>🇮🇳 India — $1.22/L</option>
+                  <option value="1.45">🇦🇺 Australia — $1.45/L</option>
+                  <option value="0.72">🇦🇪 UAE — $0.72/L</option>
+                  <option value="1.38">🇧🇷 Brazil — $1.38/L</option>
+                  <option value="1.14">🇨🇳 China — $1.14/L</option>
+                </select>
+              </div>
+              <div class="ff"><label>Price ($/L)</label><input type="number" id="cp" value="1.22" step="0.01"/></div>
+              <div class="ff"><label>Distance (km)</label><input type="number" id="cd" value="300" min="1"/></div>
+              <div class="ff"><label>Efficiency (km/L)</label><input type="number" id="ce" value="14.2" step="0.1"/></div>
+              <div class="ff"><label>Load Factor</label>
+                <select id="cl">
+                  <option value="1">Light (0–5T)</option>
+                  <option value="1.12">Medium (5–15T)</option>
+                  <option value="1.25">Heavy (15–30T)</option>
+                  <option value="1.4">Max (30T+)</option>
+                </select>
+              </div>
+              <div class="ff"><label>Vehicles</label><input type="number" id="cv" value="1" min="1"/></div>
+              <div class="ff full"><button class="sbtn" onclick="calcFuel()">CALCULATE</button></div>
+            </div>
+            <div class="cres" id="cres">
+              <div class="crr">Fuel Required<span class="cv2" id="cr-l">—</span></div>
+              <div class="crr">Trip Cost<span class="cv2" id="cr-c">—</span></div>
+              <div class="crr">Cost per km<span class="cv2" id="cr-k">—</span></div>
+              <div class="crr">Fleet Total<span class="cv2" id="cr-f">—</span></div>
+              <div class="crr">CO₂ Estimate<span class="cv2" id="cr-e">—</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FUEL LOG FORM -->
+      <div class="slbl">Log Fuel Fill</div>
+      <div class="pnl" style="margin-bottom:18px;">
+        <div class="ph"><div class="pt">Add Fuel Entry</div><span class="pb g">NEW RECORD</span></div>
+        <div class="pbody">
+          <div class="fgrid">
+            <div class="ff"><label>Date</label><input type="date" id="fl-d"/></div>
+            <div class="ff"><label>Location / Region</label><input type="text" id="fl-l" placeholder="e.g. Bengaluru, IN"/></div>
+            <div class="ff"><label>Litres Filled</label><input type="number" id="fl-lt" placeholder="e.g. 80" step="0.1" min="0"/></div>
+            <div class="ff"><label>Price per Litre ($)</label><input type="number" id="fl-p" placeholder="e.g. 1.22" step="0.01" min="0"/></div>
+            <div class="ff"><label>Odometer (km)</label><input type="number" id="fl-o" placeholder="e.g. 42500"/></div>
+            <div class="ff"><label>Trip Distance (km)</label><input type="number" id="fl-td" placeholder="e.g. 450"/></div>
+            <div class="ff full"><button class="sbtn g" onclick="submitLog()">+ LOG FUEL FILL</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FUEL LOG TABLE -->
+      <div class="slbl">Fuel History</div>
+      <div class="pnl">
+        <div class="ph"><div class="pt">My Records</div><span class="pb" id="logcount">0 entries</span></div>
+        <div style="overflow-x:auto;">
+          <table class="ltbl">
+            <thead><tr><th>Date</th><th>Location</th><th>Litres</th><th>Price/L</th><th>Total</th><th>Distance</th><th>Efficiency</th><th>CO₂</th><th></th></tr></thead>
+            <tbody id="logtbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>LOGIC CALCULATOR PRO v4.0.0 — Full Stack Logistics Platform</span>
+    <span>Built by <a href="#">Adithyan LJ</a> · Real GPS · Real Auth · Real Data</span>
+  </footer>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let ME = null;
+let DRIVERS = [];
+let SEL = null;
+let GPS_WATCH = null;
+let GPS_ACTIVE = false;
+let MGR_POLL = null;
+let ANIM = false;
+
+const trailPts = {};
+const truckEls = {};
+const NS = 'http://www.w3.org/2000/svg';
+
+// Simulated routes (fallback when no real GPS)
+const ROUTES = {
+  'TRK-001': [[150,128],[188,113],[228,98],[272,90],[322,86],[372,86]],
+  'TRK-002': [[590,160],[572,176],[554,190],[537,198],[520,194]],
+  'TRK-003': [[406,86],[424,82],[442,80],[454,84],[442,94],[420,100]],
+  'TRK-004': [[684,86],[700,100],[716,116],[708,134],[690,146]],
+  'TRK-005': [[420,198],[428,220],[424,244],[415,263],[408,278]],
+  'TRK-006': [[178,258],[184,278],[190,300],[186,324],[180,340]],
+  'TRK-007': [[392,132],[400,152],[408,176],[415,198],[418,220]],
+  'TRK-008': [[660,148],[674,160],[686,174],[692,190],[695,206]],
+};
+const routeState = {};
+
+// ══════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const hide = id => $(id).classList.add('hidden');
+const show = id => $(id).classList.remove('hidden');
+function lerp(a,b,t){return a+(b-a)*t;}
+
+function toast(msg, type='ok'){
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = `toast on${type==='err'?' err':type==='inf'?' inf':''}`;
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.className='toast', 3200);
+}
+
+// Clock
+setInterval(()=>{
+  const n=new Date();
+  $('clk').textContent=`${String(n.getUTCHours()).padStart(2,'0')}:${String(n.getUTCMinutes()).padStart(2,'0')}:${String(n.getUTCSeconds()).padStart(2,'0')} UTC`;
+},1000);
+
+// Ticker
+const FPRICES=[
+  {c:'United States',p:'$1.02',ch:'+0.01',up:1},{c:'United Kingdom',p:'$1.78',ch:'-0.03',up:0},
+  {c:'Germany',p:'$1.91',ch:'+0.05',up:1},{c:'India',p:'$1.22',ch:'+0.02',up:1},
+  {c:'Australia',p:'$1.45',ch:'-0.01',up:0},{c:'UAE',p:'$0.72',ch:'+0.01',up:1},
+  {c:'Brazil',p:'$1.38',ch:'+0.04',up:1},{c:'China',p:'$1.14',ch:'0.00',up:1},
+  {c:'Singapore',p:'$2.10',ch:'-0.05',up:0},{c:'Japan',p:'$1.65',ch:'+0.03',up:1},
+];
+$('ticker').innerHTML=[...FPRICES,...FPRICES].map(f=>`<span class="ti">⛽ <span class="tc">${f.c}</span><span class="tp">${f.p}/L</span><span class="${f.up?'tu':'td'}">${f.ch}</span><span style="color:#1a2840;margin-left:28px">|</span></span>`).join('');
+
+// ══════════════════════════════════════════════════════
+// API HELPERS
+// ══════════════════════════════════════════════════════
+async function api(method, url, body){
+  const r = await fetch(url, {
+    method,
+    headers:{'Content-Type':'application/json'},
+    credentials:'include',
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const data = await r.json();
+  if(!r.ok) throw new Error(data.error || 'Server error');
+  return data;
+}
+
+// ══════════════════════════════════════════════════════
+// LOGIN / LOGOUT
+// ══════════════════════════════════════════════════════
+let loginRole = 'manager';
+function setRole(r){
+  loginRole = r;
+  $('tab-m').className='rtab'+(r==='manager'?' on':'');
+  $('tab-d').className='rtab'+(r==='driver'?' on':'');
+}
+
+async function login(){
+  const u=$('lu').value.trim(), p=$('lp').value;
+  $('lerr').style.display='none';
+  $('lbtn').textContent='AUTHENTICATING…';
+  try {
+    const res = await api('POST','/api/login',{username:u,password:p});
+    ME = res.user;
+    $('hname').textContent = ME.name;
+    $('hrole').textContent = ME.role.toUpperCase();
+    $('hmode').textContent = ME.role==='manager'?'GPS LIVE':'DRIVER MODE';
+    $('screen-login').style.display='none';
+    $('app').style.display='flex';
+    ME.role==='manager' ? initManager() : initDriver();
+  } catch(e){
+    $('lerr').style.display='block';
+    $('lbtn').textContent='LOGIN';
+  }
+}
+
+async function logout(){
+  try { await api('POST','/api/logout'); } catch{}
+  clearInterval(MGR_POLL);
+  if(GPS_WATCH) navigator.geolocation.clearWatch(GPS_WATCH);
+  GPS_ACTIVE=false; GPS_WATCH=null; ANIM=false; SEL=null;
+  ME=null; DRIVERS=[];
+  hide('v-manager'); hide('v-driver');
+  $('screen-login').style.display='flex';
+  $('app').style.display='none';
+  $('lu').value=''; $('lp').value='';
+  $('lbtn').textContent='LOGIN';
+}
+
+// Auto-restore session on page load
+window.addEventListener('load', async()=>{
+  try {
+    const user = await api('GET','/api/me');
+    ME = user;
+    $('hname').textContent = ME.name;
+    $('hrole').textContent = ME.role.toUpperCase();
+    $('hmode').textContent = ME.role==='manager'?'GPS LIVE':'DRIVER MODE';
+    $('screen-login').style.display='none';
+    $('app').style.display='flex';
+    ME.role==='manager' ? initManager() : initDriver();
+  } catch{ /* not logged in */ }
+});
+
+// ══════════════════════════════════════════════════════
+// MANAGER
+// ══════════════════════════════════════════════════════
+async function initManager(){
+  show('v-manager');
+  await fetchDrivers();
+  buildMap();
+  if(!ANIM){ ANIM=true; animLoop(); }
+  // Poll every 4 seconds for live updates
+  MGR_POLL = setInterval(fetchDrivers, 4000);
+}
+
+async function fetchDrivers(){
+  try {
+    DRIVERS = await api('GET','/api/drivers');
+    const active = DRIVERS.filter(d=>d.status==='active').length;
+    const liveGPS = DRIVERS.filter(d=>d.gps).length;
+    const avgEff = (DRIVERS.reduce((a,d)=>a+d.eff,0)/DRIVERS.length).toFixed(1);
+    $('ka').textContent = active;
+    $('kt').textContent = DRIVERS.length;
+    $('kg').textContent = liveGPS;
+    $('ke').textContent = avgEff;
+    renderList($('msearch').value||'');
+    // Update GPS positions on map
+    DRIVERS.forEach(d=>{
+      if(d.gps){
+        const s = geoToSVG(d.gps.lat, d.gps.lng);
+        d._svgX = s.x; d._svgY = s.y; d._realGPS = true;
+      } else {
+        d._realGPS = false;
+      }
+    });
+  } catch{}
+}
+
+function renderList(f=''){
+  const fl=f.toLowerCase();
+  const filtered=DRIVERS.filter(d=>
+    d.name.toLowerCase().includes(fl)||d.id.toLowerCase().includes(fl)||d.region.toLowerCase().includes(fl)
+  );
+  $('dlist').innerHTML = filtered.length
+    ? filtered.map(d=>`
+      <div class="ditem ${SEL===d.id?'sel':''}" data-id="${d.id}" onclick="selectDriver('${d.id}')">
+        <div class="dav" style="background:${d.color}">${d.name.split(' ').map(x=>x[0]).join('')}</div>
+        <div class="din">
+          <div class="dnm">${d.name}${d.gps?` <span style="color:var(--a3);font-size:8px;">📡LIVE</span>`:''}</div>
+          <div class="dmt">${d.id} · ${d.region}</div>
+          <div class="dmt" style="margin-top:2px;color:${d.status==='active'?'var(--a3)':d.status==='idle'?'var(--a2)':'var(--mt)'}">
+            ${d.status==='active'?`▶ ${d.speed}km/h · ${d.eff}km/L`:d.status==='idle'?'⏸ Idle':'✕ Offline'}
+          </div>
+        </div>
+        <span class="dst ${d.status}">${d.status.toUpperCase()}</span>
+      </div>`).join('')
+    : `<div style="font-family:var(--mono);font-size:10px;color:var(--mt);padding:18px;text-align:center;">No match for "${f}"</div>`;
+}
+
+function filterList(v){ renderList(v); }
+
+function selectDriver(id){
+  SEL = SEL===id ? null : id;
+  renderList($('msearch').value||'');
+  const d = DRIVERS.find(x=>x.id===id);
+  if(SEL && d){
+    $('gs-name').textContent=d.name;
+    $('gs-spd').textContent=d.status==='offline'?'Offline':d.status==='idle'?'0 km/h':`${d.speed} km/h`;
+    $('gs-fuel').textContent=d.status==='offline'?'—':`${d.fuel}%`;
+    $('gs-reg').textContent=d.region;
+    $('gs-gps').textContent=d.gps?'📡 Broadcasting':'Simulated';
+    const el=document.querySelector(`.ditem[data-id="${id}"]`);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  } else {
+    ['gs-name','gs-spd','gs-fuel','gs-reg','gs-gps'].forEach(i=>$(i).textContent=i==='gs-name'?'Select driver →':'—');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// MAP
+// ══════════════════════════════════════════════════════
+function geoToSVG(lat,lng){
+  return { x:((lng+180)/360)*900, y:((90-lat)/180)*420 };
+}
+
+function buildMap(){
+  $('trails').innerHTML=''; $('trucks').innerHTML='';
+  Object.keys(truckEls).forEach(k=>delete truckEls[k]);
+  Object.keys(trailPts).forEach(k=>delete trailPts[k]);
+  Object.keys(routeState).forEach(k=>delete routeState[k]);
+
+  DRIVERS.forEach(d=>{
+    const trail=document.createElementNS(NS,'polyline');
+    trail.setAttribute('fill','none');trail.setAttribute('stroke',d.color);
+    trail.setAttribute('stroke-width','1.5');trail.setAttribute('stroke-dasharray','4,4');trail.setAttribute('opacity','0.2');
+    $('trails').appendChild(trail);
+
+    const ring=document.createElementNS(NS,'circle');
+    ring.setAttribute('fill','none');ring.setAttribute('stroke',d.color);
+    ring.setAttribute('stroke-width','1.5');ring.setAttribute('r','0');ring.setAttribute('opacity','0');
+    $('trucks').appendChild(ring);
+
+    const dot=document.createElementNS(NS,'circle');
+    dot.setAttribute('r','6');dot.setAttribute('fill',d.color);
+    dot.setAttribute('stroke','#070b10');dot.setAttribute('stroke-width','2');
+    dot.style.cursor='pointer';dot.style.filter=`drop-shadow(0 0 5px ${d.color})`;
+    $('trucks').appendChild(dot);
+
+    const lbl=document.createElementNS(NS,'text');
+    lbl.setAttribute('font-family','Share Tech Mono');lbl.setAttribute('font-size','8');
+    lbl.setAttribute('fill',d.color);lbl.setAttribute('dy','-10');lbl.setAttribute('text-anchor','middle');
+    lbl.textContent=d.id;
+    $('trucks').appendChild(lbl);
+
+    dot.addEventListener('click',()=>selectDriver(d.id));
+    dot.addEventListener('mouseenter',e=>showTip(e,d));
+    dot.addEventListener('mouseleave',()=>$('tip').classList.remove('on'));
+
+    truckEls[d.id]={trail,ring,dot,lbl};
+    trailPts[d.id]=[];
+    const rt=ROUTES[d.id]||[[200,200],[300,200],[400,200]];
+    routeState[d.id]={idx:Math.floor(Math.random()*(rt.length-1)),t:Math.random(),dir:1};
+  });
+}
+
+function animLoop(){
+  if(!ANIM) return;
+  DRIVERS.forEach(d=>{
+    if(d.status==='offline') return;
+    const els=truckEls[d.id]; if(!els) return;
+    let x,y;
+
+    if(d._realGPS && d._svgX!=null){
+      x=d._svgX; y=d._svgY;
+    } else {
+      const rt=ROUTES[d.id]||[[200,200],[400,200]];
+      const rs=routeState[d.id]; if(!rs) return;
+      const spd=d.status==='idle'?0.001:0.009;
+      rs.t+=spd;
+      if(rs.t>=1){
+        rs.t=0; rs.idx+=rs.dir;
+        if(rs.idx>=rt.length-1){rs.dir=-1;rs.idx=rt.length-2;}
+        if(rs.idx<0){rs.dir=1;rs.idx=0;}
+      }
+      const a=rt[rs.idx],b=rt[Math.min(rs.idx+1,rt.length-1)];
+      x=lerp(a[0],b[0],rs.t); y=lerp(a[1],b[1],rs.t);
+    }
+
+    els.dot.setAttribute('cx',x); els.dot.setAttribute('cy',y);
+    els.lbl.setAttribute('x',x); els.lbl.setAttribute('y',y);
+    els.ring.setAttribute('cx',x); els.ring.setAttribute('cy',y);
+
+    const pts=trailPts[d.id];
+    pts.push([x,y]); if(pts.length>32) pts.shift();
+
+    const isSel=SEL===d.id, isNone=!SEL;
+    els.trail.setAttribute('points',pts.map(p=>p.join(',')).join(' '));
+    els.trail.setAttribute('opacity',isSel?'0.65':isNone?'0.18':'0.04');
+    els.lbl.setAttribute('opacity',isSel?'1':isNone?'0.35':'0.12');
+
+    if(isSel){
+      els.dot.setAttribute('r','9');
+      els.dot.style.filter=`drop-shadow(0 0 12px ${d.color})`;
+      const rr=parseFloat(els.ring.getAttribute('r')||'8');
+      els.ring.setAttribute('r',rr>=22?8:rr+0.5);
+      els.ring.setAttribute('opacity','0.5');
+      if(d.status==='active'){
+        $('gs-spd').textContent=`${(d.speed+(Math.random()-.5)*4).toFixed(0)} km/h`;
+      }
+    } else {
+      els.dot.setAttribute('r','6');
+      els.dot.style.filter=`drop-shadow(0 0 4px ${d.color})`;
+      els.ring.setAttribute('r','8'); els.ring.setAttribute('opacity','0');
+    }
+  });
+  requestAnimationFrame(animLoop);
+}
+
+function showTip(e,d){
+  const ma=document.querySelector('.maparea').getBoundingClientRect();
+  let x=e.clientX-ma.left+14, y=e.clientY-ma.top-10;
+  if(x+190>ma.width) x=e.clientX-ma.left-200;
+  $('tipnm').textContent=d.name;
+  $('tipid').textContent=d.id;
+  $('tipspd').textContent=d.status==='offline'?'Offline':`${d.speed} km/h`;
+  $('tipfuel').textContent=d.status==='offline'?'—':`${d.fuel}%`;
+  $('tipload').textContent=d.load;
+  $('tipgps').textContent=d.gps?'📡 Live GPS':'Simulated';
+  $('tip').style.left=x+'px'; $('tip').style.top=y+'px';
+  $('tip').classList.add('on');
+}
+
+// ══════════════════════════════════════════════════════
+// DRIVER
+// ══════════════════════════════════════════════════════
+async function initDriver(){
+  show('v-driver');
+  $('fl-d').valueAsDate=new Date();
+  await loadDriverData();
+}
+
+async function loadDriverData(){
+  try {
+    const me = await api('GET','/api/me');
+    ME = {...ME,...me};
+    const logs = me.logs||[];
+    renderStats(logs);
+    renderLogs(logs);
+  } catch{}
+}
+
+function renderStats(logs){
+  const total = logs.reduce((a,l)=>a+l.totalCost,0).toFixed(2);
+  const dist = logs.reduce((a,l)=>a+(l.tripDistance||0),0);
+  const avgEff = logs.filter(l=>l.efficiency).length
+    ? (logs.reduce((a,l)=>a+(l.efficiency||0),0)/logs.filter(l=>l.efficiency).length).toFixed(1)
+    : ME.eff||'—';
+  $('tstats').innerHTML=`
+    <div class="tstat"><div class="tsv">${logs.length}</div><div class="tsl">Fuel Logs</div></div>
+    <div class="tstat"><div class="tsv" style="color:var(--a2)">$${total}</div><div class="tsl">Total Spent</div></div>
+    <div class="tstat"><div class="tsv" style="color:var(--a3)">${dist||'—'}</div><div class="tsl">km Logged</div></div>
+    <div class="tstat"><div class="tsv">${avgEff}</div><div class="tsl">Avg km/L</div></div>
+  `;
+}
+
+function renderLogs(logs){
+  $('logcount').textContent=logs.length+' entr'+(logs.length===1?'y':'ies');
+  if(!logs.length){
+    $('logtbody').innerHTML=`<tr><td colspan="9" style="text-align:center;color:var(--mt);padding:20px;font-family:var(--mono);font-size:10px;">No fuel logs yet.</td></tr>`;
+    return;
+  }
+  $('logtbody').innerHTML=logs.map(l=>`
+    <tr>
+      <td>${l.date}</td>
+      <td>${l.location}</td>
+      <td style="color:var(--a)">${l.litres}L</td>
+      <td>$${l.pricePerLitre}</td>
+      <td style="color:var(--a2)">$${l.totalCost}</td>
+      <td>${l.tripDistance||'—'}km</td>
+      <td style="color:${(l.efficiency||0)>=14?'var(--a3)':(l.efficiency||0)>=10?'var(--a2)':'var(--err)'}">${l.efficiency||'—'}km/L</td>
+      <td>${l.co2kg||'—'}kg</td>
+      <td><button class="delbtn" onclick="deleteLog('${l.id}')">DEL</button></td>
+    </tr>`).join('');
+}
+
+async function submitLog(){
+  const date=$('fl-d').value, loc=$('fl-l').value.trim();
+  const litres=$('fl-lt').value, price=$('fl-p').value;
+  const odo=$('fl-o').value, dist=$('fl-td').value;
+  if(!date||!loc||!litres||!price){ toast('Fill Date, Location, Litres and Price.','err'); return; }
+  try {
+    await api('POST','/api/logs',{date,location:loc,litres,pricePerLitre:price,odometer:odo,tripDistance:dist});
+    ['fl-l','fl-lt','fl-p','fl-o','fl-td'].forEach(id=>$(id).value='');
+    $('fl-d').valueAsDate=new Date();
+    await loadDriverData();
+    toast('✅ Fuel log saved!');
+  } catch(e){ toast(e.message,'err'); }
+}
+
+async function deleteLog(id){
+  try {
+    await api('DELETE',`/api/logs/${id}`);
+    await loadDriverData();
+    toast('Log deleted.','inf');
+  } catch(e){ toast(e.message,'err'); }
+}
+
+// ══════════════════════════════════════════════════════
+// GPS BROADCASTING
+// ══════════════════════════════════════════════════════
+async function toggleGPS(){
+  if(GPS_ACTIVE){
+    if(GPS_WATCH){ navigator.geolocation.clearWatch(GPS_WATCH); GPS_WATCH=null; }
+    try { await api('DELETE','/api/gps'); } catch{}
+    GPS_ACTIVE=false;
+    $('gpsbtn').textContent='START BROADCASTING';
+    $('gpsbtn').classList.remove('live');
+    $('gpsbadge').textContent='OFFLINE';
+    $('gpsbadge').classList.remove('live');
+    $('gcoords').classList.remove('on');
+    toast('GPS stopped.','inf');
+  } else {
+    if(!navigator.geolocation){ toast('Browser does not support GPS.','err'); return; }
+    $('gpsbtn').textContent='REQUESTING ACCESS…';
+    navigator.geolocation.getCurrentPosition(
+      async pos=>{
+        const {latitude:lat,longitude:lng,speed,heading}=pos.coords;
+        await api('POST','/api/gps',{lat,lng,speed:speed||ME.speed||0,heading:heading||0});
+        GPS_ACTIVE=true;
+        // Watch & send every 5s
+        GPS_WATCH=navigator.geolocation.watchPosition(
+          async p2=>{
+            const {latitude:la,longitude:lo,speed:sp,heading:hd}=p2.coords;
+            await api('POST','/api/gps',{lat:la,lng:lo,speed:sp||0,heading:hd||0});
+            $('gcoords').innerHTML=`📍 ${la.toFixed(5)}°, ${lo.toFixed(5)}°<br>Speed: ${(sp||0).toFixed(1)} m/s`;
+          },
+          ()=>{}, {enableHighAccuracy:true,maximumAge:5000}
+        );
+        $('gpsbtn').textContent='STOP BROADCASTING';
+        $('gpsbtn').classList.add('live');
+        $('gpsbadge').textContent='LIVE';
+        $('gpsbadge').classList.add('live');
+        $('gcoords').innerHTML=`📍 ${lat.toFixed(5)}°, ${lng.toFixed(5)}°`;
+        $('gcoords').classList.add('on');
+        toast('📡 Location broadcasting to manager!');
+      },
+      ()=>{ $('gpsbtn').textContent='START BROADCASTING'; toast('GPS access denied.','err'); },
+      {enableHighAccuracy:true,timeout:12000}
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FUEL CALCULATOR
+// ══════════════════════════════════════════════════════
+function calcFuel(){
+  const p=parseFloat($('cp').value), d=parseFloat($('cd').value);
+  const e=parseFloat($('ce').value), lf=parseFloat($('cl').value), v=parseInt($('cv').value)||1;
+  if(!p||!d||!e){ toast('Fill all fields.','err'); return; }
+  const L=(d/e)*lf, cost=L*p;
+  $('cr-l').textContent=L.toFixed(1)+' L';
+  $('cr-c').textContent='$'+cost.toFixed(2);
+  $('cr-k').textContent='$'+(cost/d).toFixed(3)+'/km';
+  $('cr-f').textContent='$'+(cost*v).toFixed(2)+' ×'+v;
+  $('cr-e').textContent=(L*2.68).toFixed(1)+' kg CO₂';
+  $('cres').classList.add('on');
+}
+</script>
+</body>
+</html>
